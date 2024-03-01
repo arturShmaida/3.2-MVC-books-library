@@ -1,0 +1,37 @@
+{
+  "name": "3.2-mvc-books-library",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rm -rf ./dist && tsc",
+    "start": "node ./dist/index.js",
+    "dev": "nodemon run ./dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arturShmaida/3.2-MVC-books-library.git"
+  },
+  "author": "Artur Shmaida",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/arturShmaida/3.2-MVC-books-library/issues"
+  },
+  "homepage": "https://github.com/arturShmaida/3.2-MVC-books-library#readme",
+  "dependencies": {
+    "dotenv": "^16.4.1",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "morgan": "^1.10.0",
+    "mysql2": "^3.9.1",
+    "nodemon": "^3.0.3",
+    "tsc": "^2.0.4",
+    "typescript": "^5.3.3"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/jquery": "^3.5.29",
+    "@types/node": "^20.11.16"
+  }
+}

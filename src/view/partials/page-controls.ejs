@@ -1,0 +1,13 @@
+<center>
+<% if(previousPage) { %>
+<a href="/?offset=<%= +offset - 10 %>">
+	<button id="prevBtn" class="page-controls-btn">Previous</button>
+</a>
+<% } %>
+
+<% if(nextPage) { %>
+<a href="/?offset=<%= +offset + 10 %>">
+	<button id="nextBtn" class="page-controls-btn">Next</button>
+</a>
+<% } %>
+</center>
