@@ -1,0 +1,34 @@
+
+<h4>Books in total: <%= books.length %></h4>
+<div class="table-responsive">
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Назва книги</th>
+				<th>Автори</th>
+				<th>Рік</th>
+				<th>Дії</th>
+				<th>Кліки</th>
+			</tr>
+		</thead>
+		<tbody class="table-content">
+			<% if(books.length) { %> <% books.forEach(({ title, author, year, clicks, id }) => { %>
+			<tr>
+				<td id="title"><%=(!title ? "-" : title )%></td>
+				<td id="authors"><%=(!author ? "-" : author )%></td>
+				<td id="year"><%= (!year ? "-" : year ) %></td>
+				<td id="action"> <button class="btnBookDelete" book-id="<%=id%>">delete</button></td>
+				<td id="clicks" class="text-center"><%=(clicks !== undefined  ? clicks : "-" )%></td>
+			</tr>
+			<% })%>
+            <% } %>	
+		</tbody>
+	</table>
+	<nav aria-label="navigation">
+		<ul class="pagination justify-content-center">
+			<% for(let i = 1; i <= pageCount; i++) { %>
+		  <li class="page-item"><a class="page-link" href="?page=<%=i%>"><%= i%></a></li>
+		  <% } %>
+		</ul>
+	  </nav>
+</div>

@@ -1,81 +1,95 @@
-import mysql, { RowDataPacket } from "mysql2";
-
+import mysql, { RowDataPacket,ResultSetHeader} from "mysql2";
+import mySqlDump from "mysqldump";
 import dotenv from 'dotenv';
-import { parseSqlFile } from "../utils/utils"
+import { parseSqlFile, getBasePath } from "../utils/utils"
 
 dotenv.config()
-enum tableNameType {
-    books = 'books',
-    authors = "authors",
-    id_pairs = "id_pairs"
-}
-type tableNameStrings = keyof typeof tableNameType
 
+const databaseName = process.env.DB_DATABASE;
 const pool = mysql.createPool({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_DATABASE,
+    database: databaseName,
     multipleStatements: true
 }).promise();
 
-export async function getRecords(tableName: tableNameStrings) {
-
-
-    const [rows] = await pool.query<RowDataPacket[]>(`SELECT * FROM ??`, [tableName])
-    console.log(rows)
-    return rows;
+export async function getPool() {
+    return pool;
 }
 
-// Get any record by id 
-export async function getRecord(tableName: tableNameStrings, id: number) {
-    let { firstColName } = getTableFields(tableName)
-    let queryRecord = await parseSqlFile("queryBook")
-    console.log("queryRecord")
-    // const [rows] = await pool.execute(queryRecord, [tableName, firstColName, id])
-    const [rows] = await pool.execute(queryRecord, [id])
-
-    return rows;
-}
-export async function createRecord(tableName: tableNameStrings, id: number, name: string | number) {
-    let { firstColName, secondColName } = getTableFields(tableName)
-
-    await pool.query(`INSERT INTO ?? (${firstColName},${secondColName}) 
-        VALUES (?,?)`, [tableName, id, name])
-
-}
-export async function incrementRecord(increment: "views" | "clicks", id: number) {
-    let queryBooksFields = await parseSqlFile("queryBooksViewsAndClicks");
-    const [rows] = await pool.execute<RowDataPacket[]>(queryBooksFields, [id]);
-    let success = true;
+export async function getDeletedRecordsIdArray() {
     try {
-        switch (increment) {
-            case "clicks": {
-                if (rows[0].clicks) {
-                    console.log("oldClicks: " + rows[0].clicks)
-                    let newClicks = `${rows[0].clicks + 1}`
-                    console.log("newClicks: " + newClicks)
-                    let incrementBookClicks = await parseSqlFile("incrementBookClicks");
-                    await pool.execute<RowDataPacket[]>(incrementBookClicks, [newClicks, id]);
-                }
-                break;
-            }
-            case "views": {
-                if (rows[0].views) {
-                    let newViews = `${rows[0].views + 1}`
-                    let incrementBookViews = await parseSqlFile("incrementBookViews");
-
-                    await pool.execute<RowDataPacket[]>(incrementBookViews, [newViews, id]);
-                }
-                break;
-            }
-        }
-    } catch (error) {
-        console.log(error)
-        success = false;
+        let deleteQuery = "SELECT `id` FROM `books` WHERE is_delete = 1";
+        let result = await pool.execute<RowDataPacket[]>(deleteQuery)
+      
+        return result[0]
+    } catch (err) {
+        console.log("error getDeletedRecordsIdArray")
+        console.log(err)
     }
 
-    return success;
+}
+
+export async function deleteMarkedRecordsConnections() {
+    try {
+        let bookRecordIdArray: RowDataPacket[] | undefined = await getDeletedRecordsIdArray()
+        if (typeof bookRecordIdArray === "undefined") {
+            return;
+        }
+        for (let bookId of bookRecordIdArray) {
+            await deleteTheBookRecord(bookId.id);
+            await deleteAuthorsIfnoMultipleConnections(bookId.id)
+            await deleteTheConnection(bookId.id);
+        }
+
+    } catch (err) {
+        console.log("error delete deleteMarkedRecords..")
+        console.log(err)
+    }
+}
+
+export async function deleteAuthorsIfnoMultipleConnections(bookId: number) {
+    try {
+        let auhorIdQuery = `SELECT authors_id FROM id_pairs WHERE book_id = ${bookId}`;
+        let [[{ authors_id }]] = await pool.execute<RowDataPacket[]>(auhorIdQuery);
+      
+
+
+        let authorsNameQuery = `SELECT authors_name FROM authors WHERE authors_id = ${authors_id}`;
+        let [[{ authors_name }]] = await pool.execute<RowDataPacket[]>(authorsNameQuery);
+
+        let deleteQuery = `DELETE FROM authors WHERE authors_id = ${authors_id} AND authors_name NOT IN (SELECT author FROM  books WHERE author LIKE '${authors_name}')`
+        let deleteResult = await pool.execute<RowDataPacket[]>(deleteQuery);
+
+    } catch (err) {
+
+        console.log(err)
+    }
+}
+
+async function deleteTheConnection(bookId: number) {
+    try {
+        let deleteQuery = `DELETE FROM id_pairs WHERE book_id = ${bookId};`
+        let deleteResult = await pool.execute<RowDataPacket[]>(deleteQuery);
+      
+        return deleteResult;
+    } catch (err) {
+        console.log("error deleteTheConnection");
+        console.log(err);
+    }
+}
+
+export async function deleteTheBookRecord(bookId: number) {
+    try {
+        let deleteQuery = `DELETE FROM books WHERE id = ${bookId};`
+        let deleteResult = await pool.execute<RowDataPacket[]>(deleteQuery);
+        
+        return deleteResult;
+    } catch (err) {
+        console.log("error deleteTheBookRecord");
+        console.log(err);
+    }
 }
 
 export async function prefilTheDatabase() {
@@ -87,37 +101,40 @@ export async function prefilTheDatabase() {
         await pool.execute(queryAuthors)
         await pool.execute(queryBooks)
         await pool.execute(queryPairs)
+        console.log("The database was prefilled after")
     } catch (err) {
         console.log(err)
     }
 }
 
-export async function initDatabase() {
-    console.group("initDatabase: ")
+export async function initDatabase() { 
+    
+    let createDataBaseQuery = `CREATE DATABASE IF NOT EXISTS ${databaseName}`;
+    await pool.execute(createDataBaseQuery);
     let allTablesExist = await checkIfTableExist();
-    console.log("allTablesExist")
     if (!allTablesExist) {
         await deleteTables();
         await createTables();
-
         await prefilTheDatabase();
     }
-    console.groupEnd();
 }
+
 async function checkIfTableExist() {
-    let areTablesExists = true;
+    let areTablesExists = false;
     try {
         let dbName = process.env.DB_DATABASE;
-        let sqlRequest = await parseSqlFile("isTableExists");
-        console.log(`${sqlRequest}
-        "dbName: "${dbName}`)
-        let authorsExist = await pool.execute(sqlRequest, [dbName, `authors`])
-        let booksExist = await pool.execute(sqlRequest, [dbName, `books`])
-        let pairsExist = await pool.execute(sqlRequest, [dbName, `id_pairs`])
+        
+        let [authorsExist] = await pool.execute<ResultSetHeader[]>(`SHOW TABLES FROM ${dbName} LIKE ${'"authors"'}`)
+        
 
-        if (!authorsExist || !booksExist || !pairsExist) {
-            areTablesExists = false;
-            console.log(`tables not exist: authorsExist:${authorsExist} booksExist:${booksExist} pairsExist: ${pairsExist} `)
+        let [booksExist] =await pool.execute<ResultSetHeader[]>(`SHOW TABLES FROM ${dbName} LIKE ${'"books"'}`)
+        let [pairsExist] = await pool.execute<ResultSetHeader[]>(`SHOW TABLES FROM ${dbName} LIKE ${'"id_pairs"'}`)
+        
+
+        if (authorsExist.length && booksExist.length && pairsExist.length) {
+            areTablesExists = true;
+        } else{
+            console.log(`!checkIfTableExist: Tables found missing!`)
         }
 
     } catch (error) {
@@ -131,8 +148,8 @@ async function deleteTables() {
     try {
         let dropIfExists = await parseSqlFile("dropTableIfExist");
         result = await pool.execute(dropIfExists, ["authors", "books", "id_pairs"])
-        console.log("deleteTables fires")
-        console.log("Dropped tables: " + result)
+        console.log("!deleteTables: Dropping tables ")
+
     } catch (error) {
         console.log(error);
         console.log(result);
@@ -140,6 +157,7 @@ async function deleteTables() {
     }
 
 }
+
 async function createTables() {
     try {
         let createBookTableRq = await parseSqlFile("createBookTable");
@@ -149,7 +167,7 @@ async function createTables() {
         await pool.execute<RowDataPacket[]>(createBookTableRq)
         await pool.execute<RowDataPacket[]>(createAutorsTable)
         await pool.execute<RowDataPacket[]>(createPairsTable)
-        console.log("createTables fires")
+        console.log(" createTables: Created Book, Author, Pairs Tables")
     } catch (error) {
         console.log(error)
         throw error;
@@ -158,30 +176,27 @@ async function createTables() {
     return true;
 }
 
-
-
-
-function getTableFields(tableName: tableNameStrings) {
-    let firstColName: string;
-    let secondColName: string;
-    switch (tableName) {
-        case "books": {
-            firstColName = "id";
-            secondColName = "book_title";
-            break;
-        }
-        case "authors": {
-            firstColName = "authors_id";
-            secondColName = "authors_title";;
-            break;
-        }
-        case "id_pairs": {
-            firstColName = "book_id";
-            secondColName = "authors_id";;
-            break;
-        }
+export async function createBackup() {
+    if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.DB_DATABASE) {
+        console.log("Backup creation faliled do to missing .env variables")
+        return;
     }
 
-    return { firstColName, secondColName };
+    try {
+        let dupmFileName = `${getBasePath()}/dbDump/${Math.round(Date.now() / 1000)}.dump.sql`
+        mySqlDump({
+            connection: {
+                host: process.env.DB_HOST,
+                user: process.env.DB_USER,
+                password: process.env.DB_PASSWORD,
+                database: process.env.DB_DATABASE,
+            },
+            dumpToFile: dupmFileName
+        });
 
+        console.log("Backup dump created successfuly!")
+    } catch (err) {
+        console.log("Backup creation faliled")
+        console.log(err)
+    }
 }

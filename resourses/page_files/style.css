@@ -22,7 +22,9 @@ html, body {
   .btn-success:hover {
     background-color: #2cc56d;
     border-color: #34b96c; }
-
+#frame {
+  max-height: 150px;
+}
 /* -------------------------- .header-wrapper ------------------------------ */
 .header-wrapper .navbar {
   border-bottom: 5px solid #27ae60;

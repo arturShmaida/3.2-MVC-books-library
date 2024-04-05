@@ -1,3 +1,3 @@
  SELECT *
     FROM `books` 
-    WHERE id = ?
+    WHERE id = ? AND is_delete = 0;

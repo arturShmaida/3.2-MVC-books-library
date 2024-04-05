@@ -7,6 +7,7 @@
                 name="search"
                 placeholder="Найти книгу"
                 class="form-control"
+                value ="<%= (!!search ? search : '') %>"
             />
             <script>
                 $("#search").bind("keypress", function (e) {
@@ -20,7 +21,7 @@
 
             <div class="loader">
                 <img
-                    src="http://localhost:3000//books-page_files/loading.gif"
+                    src="http://localhost:3000/static/books-page_files/loading.gif"
                 />
             </div>
             <div

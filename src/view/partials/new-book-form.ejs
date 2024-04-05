@@ -1,0 +1,54 @@
+<form class="row g-3" id="bookAdd">
+	<div class="col-md-6">
+		<label for="title" class="form-label">Назва книги</label>
+		<input type="text" class="form-control" id="title" name="title" />
+	</div>
+	<div class="col-md-6">
+		<label for="author-1" class="form-label">Автор1</label>
+		<input type="text" class="form-control" id="author-1" name="authorOne" />
+	</div>
+	<div class="col-md-6">
+		<label for="year" class="form-label">Рік видання</label>
+		<input type="text" class="form-control" id="year"name="year" />
+	</div>
+	<div class="col-md-6">
+		<label for="author-2" class="form-label">Автор2</label>
+		<input type="text" class="form-control" id="author-2" name ="authorTwo" />
+	</div>
+	<div class="col-md-6">
+		<label for="upload" class="form-label">Завантажити картинку</label>
+		<input
+			class="form-control"
+			type="file"
+			id="formFile"
+			name = "image"
+			onchange="preview()"
+		/>
+	</div>
+	<div class="col-md-6">
+		<label for="author-3" class="form-label">Автор3</label>
+		<input type="text" class="form-control" id="author-3" name="authorThree" />
+	</div>
+	<div id="book-cover" class="col-md-6 item">
+		<img id="frame" src="" class="img-thumbnail" />
+		<button onclick="clearImage()" class="btn btn-primary mt-3">
+			Clear upload
+		</button>
+	</div>
+	<div class="col-md-6">
+		<label for="description" class="form-label">Опис книги</label>
+		<textarea id="description" name="description" rows="4" cols="50"> </textarea>
+	</div>
+	<div class="col-md-12">
+		<input type="submit" value="Додати" class="btn btn-primary">
+	</div>
+</form>
+<script>
+	function preview() {
+		frame.src = URL.createObjectURL(event.target.files[0]);
+	}
+	function clearImage() {
+		document.getElementById("formFile").value = null;
+		frame.src = "";
+	}
+</script>

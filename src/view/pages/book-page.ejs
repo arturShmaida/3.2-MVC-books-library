@@ -7,22 +7,16 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="description" content="library Sh++" />
 
-		<link rel="stylesheet" href="http://localhost:3000/book-page_files/libs.min.css" />
-		<link rel="stylesheet" href="http://localhost:3000/book-page_files/style.css" />
-		<!-- <link rel="script" href="http://localhost:3000/books-page_files/common.js" /> -->
-		<!-- <link rel="script" href="http://localhost:3000/book-page_files/book.js" /> -->
-		<!-- <script src="http://localhost:3000/books-page_files/common.js"></script> -->
-		<!-- <link rel="stylesheet" href="http://localhost:3000/book-page_files/search.js" />  -->
-		
+		<link rel="stylesheet" href="http://localhost:3000/static/page_files/libs.min.css" />
+		<link rel="stylesheet" href="http://localhost:3000/static/page_files/style.css" />		
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-		<script src="http://localhost:3000/book-page_files/book.js"></script>
+		<script src="http://localhost:3000/static/page_files/book.js"></script>
 		<link
 			rel="stylesheet"
 			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css"
 			crossorigin="anonymous"
 		/>
 
-		<!-- <link rel="shortcut icon" href="http://localhost:3000/book/favicon.ico" /> -->
 	</head>
 
 	<body data-gr-c-s-loaded="true" class="">
@@ -38,7 +32,7 @@
 					</div>
 					<div class="col-xs-12 col-sm-7 col-md-8 col-lg-8">
 						<div class="main-menu">
-							<%- include("../partials/search-form") -%>
+							<%- include("../partials/search-form",search = undefined) -%>
 						</div>
 					</div>
 					<div class="col-xs-2 col-sm-3 col-md-2 col-lg-2 hidden-xs">
@@ -61,32 +55,17 @@
 					id="content"
 					class="book_block col-xs-12 col-sm-12 col-md-12 col-lg-12"
 				>
-					<!-- <script id="pattern" type="text/template">
-						<div data-book-id="{id}" class="book_item col-xs-6 col-sm-3 col-md-2 col-lg-2">
-						    <div class="book">
-						        <a href="/book/{id}"><img src="img/books/{id}.jpg" alt="{title}">
-						            <div data-title="{title}" class="blockI">
-						                <div data-book-title="{title}" class="title size_text">{title}</div>
-						                <div data-book-author="{author}" class="author">{author}</div>
-						            </div>
-						        </a>
-						        <a href="/book/{id}">
-						            <button type="button" class="details btn btn-success">Читать</button>
-						        </a>
-						    </div>
-						</div>
-					</script> -->
-
 					
 					<div id="id" book-id="<%=id%>">
 						<div
 							id="bookImg"
 							class="col-xs-12 col-sm-3 col-md-3 item"
-							style="margin: 10px"> <!--Empty value was here, changed to 10 px-->
+							style="margin: 10px"> 
 
 							<img
-								src="http://localhost:3000/img/books/<%=id%>.jpg"
+								src="http://localhost:3000/static/img/books/<%=id%>.jpg"
 								alt="Responsive image"
+								onerror="this.onerror=null; this.src='/static/img/books/default.jpg'"
 								class="img-responsive"
 							/>
 
@@ -147,22 +126,13 @@
 							</p>
 						</div>
 					</div>
-					<script src="http://localhost:3000/book-page_files/book.js" defer=""></script>
+					<script src="http://localhost:3000/static/page_files/book.js" defer=""></script>
 				</div>
 			</div>
 		</section>
+		
 		<section id="footer" class="footer-wrapper">
-			<div class="navbar-bottom row-fluid">
-				<div class="navbar-inner">
-					<div class="container-fuild">
-						<div class="content_footer">
-							Made with<a href="http://programming.kr.ua/" class="heart"
-								><i aria-hidden="true" class="fa fa-heart"></i></a
-							>by HolaTeam
-						</div>
-					</div>
-				</div>
-			</div>
+			<%- include("../partials/footer") -%>
 		</section>
 		<div
 			class="sweet-overlay"

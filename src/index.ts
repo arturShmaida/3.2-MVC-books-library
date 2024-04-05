@@ -1,26 +1,33 @@
 import express from 'express';
 import bodyParser from "body-parser";
-import path from 'path';
-import { router } from "./routes/router.js"
-import { UserController } from './controler/userController.js';
+import fileUpload from "express-fileupload";
+import { router,authRouter } from "./routes/router.js"
 import dotenv from 'dotenv';
+import { errorHandler } from './utils/errorHandler.js';
+import {startDBScheduledJobs}  from "./utils/scheduled.js"
+import { initDatabase} from "./model/bd.js"
+import morgan from 'morgan';
 
-import {initDatabase, prefilTheDatabase } from "./model/bd.js" 
-
-
-const morgan = require('morgan')
+const jsonParser = bodyParser.json();
 dotenv.config();
-const port = process.env.PORT;
-
+initDatabase();
 const app = express();
 app.set("view engine", "ejs");
 app.use(morgan('tiny'))
-app.use(express.static(path.join(__dirname+ "../../src/view/public")));
-app.use(express.static(path.join(__dirname+ "../../src/view/public")));
-app.use(express.static(path.join(__dirname+ "../../dist/view/public")));
+app.use(errorHandler)
+app.use(fileUpload({
+    limits: {
+        fileSize: 10000000,
+    },
+    abortOnLimit: true,
+})
+);
+app.use(jsonParser)
 app.use(router)
-initDatabase();
+app.use(authRouter)
 
+startDBScheduledJobs()
+const port = process.env.PORT;
 app.listen(port, () => {
     console.log(`Listening on port localhost:${process.env.PORT}`)
 })
